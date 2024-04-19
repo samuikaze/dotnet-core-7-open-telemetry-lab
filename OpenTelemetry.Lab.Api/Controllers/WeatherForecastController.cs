@@ -4,6 +4,7 @@ using DotNet7.Template.Api.Models.ServiceModels;
 using DotNet7.Template.Api.Models.ViewModels;
 using DotNet7.Template.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using OpenTelemetry.Lab.Api.Extensions;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace DotNet7.Template.Api.Controllers
@@ -34,6 +35,8 @@ namespace DotNet7.Template.Api.Controllers
         [HttpGet("GetWeatherForecast")]
         public List<WeatherForecastViewModel> Get()
         {
+            _logger.RetrievingWeatherForecast("testUser");
+
             return _mapper.Map<List<WeatherForecastViewModel>>(
                 _weatherService.Get());
         }

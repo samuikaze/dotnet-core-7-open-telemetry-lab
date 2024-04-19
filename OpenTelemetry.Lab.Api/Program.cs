@@ -1,5 +1,7 @@
 using DotNet7.Template.Api.Extensions;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Lab.Api.Extensions;
+using OpenTelemetry.Lab.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,7 @@ ServiceMapperExtension.GetServiceProvider(builder.Services);
 DatabaseExtension.AddDatabaseContext(builder.Services, builder.Configuration);
 AuthorizationExtension.ConfigureAuthorization(builder.Services, builder.Configuration);
 HttpClientExtension.ConfigureHttpClients(builder.Services);
+OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services, builder.Configuration);
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -47,6 +50,12 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseRouting();
+
+app.UseOpenTelemetryMiddleware();
+app.UseOpenTelemetryPrometheusScrapingEndpoint(context =>
+    context.Request.Path == "/internal/metrics");
 
 app.ConfigureMiddlewares();
 
