@@ -3,7 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
-namespace DotNet7.Template.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
     public class AuthorizationExtension
     {

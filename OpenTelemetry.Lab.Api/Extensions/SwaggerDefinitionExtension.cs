@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace DotNet7.Template.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
     public class SwaggerDefinitionExtension
     {

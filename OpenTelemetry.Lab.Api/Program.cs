@@ -1,7 +1,5 @@
-using DotNet7.Template.Api.Extensions;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Lab.Api.Extensions;
-using OpenTelemetry.Lab.Api.Middlewares;
+using DotNet7.OpenTelemetryLab.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,9 +51,8 @@ app.UseAuthorization();
 
 app.UseRouting();
 
-app.UseOpenTelemetryMiddleware();
 app.UseOpenTelemetryPrometheusScrapingEndpoint(context =>
-    context.Request.Path == "/internal/metrics");
+    context.Request.Path == "/metrics");
 
 app.ConfigureMiddlewares();
 

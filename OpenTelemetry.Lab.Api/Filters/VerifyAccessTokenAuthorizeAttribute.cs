@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using DotNet7.Template.Api.HttpClients;
-using DotNet7.Template.Api.Models.ServiceModels;
+using DotNet7.OpenTelemetryLab.Api.HttpClients;
+using DotNet7.OpenTelemetryLab.Api.Models.ServiceModels;
 
-namespace DotNet7.Template.Api.Filters
+namespace DotNet7.OpenTelemetryLab.Api.Filters
 {
     public class VerifyAccessTokenAuthorizeAttribute : AuthorizeAttribute, IAsyncAuthorizationFilter
     {

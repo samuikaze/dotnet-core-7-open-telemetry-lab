@@ -1,4 +1,4 @@
-namespace DotNet7.Template.Api.HttpClients
+namespace DotNet7.OpenTelemetryLab.Api.HttpClients
 {
     public class SingleSignOnClient
     {

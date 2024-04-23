@@ -1,7 +1,7 @@
 using AutoMapper;
-using DotNet7.Template.Api.Models.ServiceModels;
+using DotNet7.OpenTelemetryLab.Api.Models.ServiceModels;
 
-namespace DotNet7.Template.Api.Services
+namespace DotNet7.OpenTelemetryLab.Api.Services
 {
     public class WeatherService : IWeatherService
     {

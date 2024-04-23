@@ -1,4 +1,4 @@
-namespace DotNet7.Template.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
     public static class CorsHandlerExtension
     {

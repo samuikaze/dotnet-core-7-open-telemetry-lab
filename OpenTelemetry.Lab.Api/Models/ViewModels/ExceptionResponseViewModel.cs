@@ -1,4 +1,4 @@
-namespace DotNet7.Template.Api.Models.ViewModels
+namespace DotNet7.OpenTelemetryLab.Api.Models.ViewModels
 {
     public class ExceptionResponseViewModel
     {

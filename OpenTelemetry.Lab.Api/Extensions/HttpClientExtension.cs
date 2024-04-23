@@ -1,6 +1,6 @@
-using DotNet7.Template.Api.HttpClients;
+using DotNet7.OpenTelemetryLab.Api.HttpClients;
 
-namespace DotNet7.Template.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
     public class HttpClientExtension
     {

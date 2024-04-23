@@ -1,4 +1,4 @@
-namespace DotNet7.Template.Api.Models.ServiceModels
+namespace DotNet7.OpenTelemetryLab.Api.Models.ServiceModels
 {
     public class WeatherForecastServiceModel
     {

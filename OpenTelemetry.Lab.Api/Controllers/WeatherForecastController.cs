@@ -1,13 +1,13 @@
 using AutoMapper;
-using DotNet7.Template.Api.Filters;
-using DotNet7.Template.Api.Models.ServiceModels;
-using DotNet7.Template.Api.Models.ViewModels;
-using DotNet7.Template.Api.Services;
+using DotNet7.OpenTelemetryLab.Api.Filters;
+using DotNet7.OpenTelemetryLab.Api.Models.ServiceModels;
+using DotNet7.OpenTelemetryLab.Api.Models.ViewModels;
+using DotNet7.OpenTelemetryLab.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using OpenTelemetry.Lab.Api.Extensions;
+using DotNet7.OpenTelemetryLab.Api.Extensions;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace DotNet7.Template.Api.Controllers
+namespace DotNet7.OpenTelemetryLab.Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]

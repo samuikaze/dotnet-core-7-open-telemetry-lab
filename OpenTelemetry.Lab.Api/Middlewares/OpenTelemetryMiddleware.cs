@@ -1,6 +1,6 @@
 using System.Diagnostics.Metrics;
 
-namespace OpenTelemetry.Lab.Api.Middlewares
+namespace DotNet7.OpenTelemetryLab.Api.Middlewares
 {
     public class OpenTelemetryMiddleware
     {
@@ -22,15 +22,6 @@ namespace OpenTelemetry.Lab.Api.Middlewares
         {
             await _next(context);
             _greetingCounter.Add(1);
-        }
-    }
-
-    public static class  OpenTelemetryMiddlewareExtension
-    {
-        public static IApplicationBuilder UseOpenTelemetryMiddleware(
-            this IApplicationBuilder app)
-        {
-            return app.UseMiddleware<OpenTelemetryMiddleware>();
         }
     }
 }

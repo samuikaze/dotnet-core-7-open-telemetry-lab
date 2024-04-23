@@ -1,4 +1,4 @@
-namespace OpenTelemetry.Lab.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
     internal static partial class LoggerExtensions
     {

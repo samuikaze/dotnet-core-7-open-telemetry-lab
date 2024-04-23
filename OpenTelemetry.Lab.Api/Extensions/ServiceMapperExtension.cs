@@ -1,6 +1,6 @@
-using DotNet7.Template.Api.Services;
+using DotNet7.OpenTelemetryLab.Api.Services;
 
-namespace DotNet7.Template.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
     public class ServiceMapperExtension
     {

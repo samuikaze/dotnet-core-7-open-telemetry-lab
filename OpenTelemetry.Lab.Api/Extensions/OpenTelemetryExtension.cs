@@ -1,13 +1,16 @@
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Lab.Api.Middlewares;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
+using System.Diagnostics.Metrics;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
 
-namespace OpenTelemetry.Lab.Api.Extensions
+namespace DotNet7.OpenTelemetryLab.Api.Extensions
 {
-    public class OpenTelemetryExtension
+    public static class OpenTelemetryExtension
     {
+        public static Meter openTelemetryMeter = new Meter("dotnet7.core.telemetry", "1.0.0");
         public static IServiceCollection ConfigureOpenTelemetry(
             ILoggingBuilder loggingBuilder,
             IServiceCollection serviceCollection,
@@ -17,6 +20,14 @@ namespace OpenTelemetry.Lab.Api.Extensions
             if (applicationName == null)
             {
                 applicationName = "OpenTelemetry.Lab";
+            }
+
+            string? otlpTargetUri = config.GetValue(
+                "OpenTelemetry:OtlpUri",
+                "http://localhost:4318");
+            if (otlpTargetUri == null)
+            {
+                otlpTargetUri = "http://localhost:4318";
             }
 
             var resource = ResourceBuilder.CreateDefault().AddService(applicationName);
@@ -32,12 +43,19 @@ namespace OpenTelemetry.Lab.Api.Extensions
                 .ConfigureResource(resource => resource
                     .AddService(serviceName: applicationName))
                 .WithMetrics(metrics => metrics
+                    .AddMeter(openTelemetryMeter.Name)
                     .AddAspNetCoreInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddProcessInstrumentation()
                     .AddPrometheusExporter()
-                    .AddMeter(OpenTelemetryMiddleware.MeterName))
+                    .AddConsoleExporter()
+                    .AddPrometheusExporter())
                 .WithTracing(tracing => tracing
                     .AddAspNetCoreInstrumentation()
-                    .AddConsoleExporter());
+                    .AddConsoleExporter())
+                .UseOtlpExporter(
+                    OtlpExportProtocol.HttpProtobuf,
+                    new Uri(otlpTargetUri));
 
             return serviceCollection;
         }

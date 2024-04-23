@@ -1,8 +1,8 @@
 using AutoMapper;
-using DotNet7.Template.Api.Models.ServiceModels;
-using DotNet7.Template.Api.Models.ViewModels;
+using DotNet7.OpenTelemetryLab.Api.Models.ServiceModels;
+using DotNet7.OpenTelemetryLab.Api.Models.ViewModels;
 
-namespace DotNet7.Template.Api.AutoMapperProfiles
+namespace DotNet7.OpenTelemetryLab.Api.AutoMapperProfiles
 {
     public class WeatherProfile : Profile
     {

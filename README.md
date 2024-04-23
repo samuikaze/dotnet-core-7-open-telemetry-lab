@@ -12,9 +12,14 @@
     > 將日誌輸出到終端機
   - OpenTelemetry.Exporter.Prometheus.AspNetCore (搶鮮版)
     > 將指標輸出到指定的路徑，並使用 Prometheus 格式輸出
+  - OpenTelemetry.Exporter.OpenTelemetryProtocol
   - OpenTelemetry.Extensions.Hosting
   - OpenTelemetry.Instruumentation.AspNetCore
   - OpenTelemetry.Instrumentation.Http
+  - OpenTelemetry.Instrumentation.Process
+    > 輸出 CPU、記憶體等指標資料
+  - OpenTelemetry.Instrumentation.Runtime
+    > 輸出 GC 等資料
 
 並在 Extensions 資料夾中新增 `OpenTelemetryExtension.cs` 檔案，寫入如下的內容
 
@@ -26,36 +31,48 @@ public class OpenTelemetryExtension
         IServiceCollection serviceCollection,
         IConfiguration config)
     {
-        // 設定應用程式或服務名稱
         string? applicationName = config.GetValue<string>("Application:Name");
-        if (applicationName == null)
-        {
-            applicationName = "OpenTelemetry.Lab";
-        }
+            if (applicationName == null)
+            {
+                applicationName = "OpenTelemetry.Lab";
+            }
 
-        // 設定 Open Telemetry 日誌輸出
-        var resource = ResourceBuilder.CreateDefault().AddService(applicationName);
-        // 設定僅輸出警告日誌
-        // loggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Warning);
-        loggingBuilder.AddOpenTelemetry(options =>
-        {
-            options.SetResourceBuilder(resource);
-            options.AddConsoleExporter();
-        });
+            string? otlpTargetUri = config.GetValue(
+                "OpenTelemetry:OtlpUri",
+                "http://localhost:4318");
+            if (otlpTargetUri == null)
+            {
+                otlpTargetUri = "http://localhost:4318";
+            }
 
-        // 設定 OpenTelemetry 指標與追蹤輸出
-        serviceCollection.AddOpenTelemetry()
-            .ConfigureResource(resource => resource
-                .AddService(serviceName: applicationName))
-            .WithMetrics(metrics => metrics
-                .AddAspNetCoreInstrumentation()
-                .AddPrometheusExporter()
-                .AddMeter(OpenTelemetryMiddleware.MeterName))
-            .WithTracing(tracing => tracing
-                .AddAspNetCoreInstrumentation()
-                .AddConsoleExporter());
+            var resource = ResourceBuilder.CreateDefault().AddService(applicationName);
+            // 設定僅輸出警告日誌
+            // loggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Warning);
+            loggingBuilder.AddOpenTelemetry(options =>
+            {
+                options.SetResourceBuilder(resource);
+                options.AddConsoleExporter();
+            });
 
-        return serviceCollection;
+            serviceCollection.AddOpenTelemetry()
+                .ConfigureResource(resource => resource
+                    .AddService(serviceName: applicationName))
+                .WithMetrics(metrics => metrics
+                    .AddMeter(openTelemetryMeter.Name)
+                    .AddAspNetCoreInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddProcessInstrumentation()
+                    .AddPrometheusExporter()
+                    .AddConsoleExporter()
+                    .AddPrometheusExporter())
+                .WithTracing(tracing => tracing
+                    .AddAspNetCoreInstrumentation()
+                    .AddConsoleExporter())
+                .UseOtlpExporter(
+                    OtlpExportProtocol.HttpProtobuf,
+                    new Uri(otlpTargetUri));
+
+            return serviceCollection;
     }
 }
 ```
@@ -72,7 +89,7 @@ OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services,
 
 1. 在 Extensions 資料夾新增 `ILoggerExtension.cs`，並加入以下程式碼：
 
-    > 這個主要在做結構化日誌的設定
+    > 這個主要在做結構化日誌的設定，不一定要透過這種方式輸出日誌
 
     ```csharp
     internal static partial class LoggerExtensions
@@ -200,3 +217,11 @@ OpenTelemetry 在 .Net Core 中的追蹤實作是依賴於 .Net Core 內建的 `
 - [Customizing OpenTelemetry .NET SDK for Metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/metrics/customizing-the-sdk/README.md)
 - [opentelemetry-dotnet - Program.cs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/examples/AspNetCore/Program.cs)
 - [How to Setup OpenTelemetry Logging in .NET](https://www.youtube.com/watch?v=QU_o24OZeIw)
+- [Collector](https://opentelemetry.io/docs/collector/)
+- [OTLP Exporter Configuration](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/#otel_exporter_otlp_endpoint)
+- [OTLP Exporter for OpenTelemetry .NET](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+- [Getting started with OpenTelemetry Metrics in .NET 8. Part 2: Instrumenting the BookStore API](https://www.mytechramblings.com/posts/getting-started-with-opentelemetry-metrics-and-dotnet-part-2/)
+- [在 ASP .NET Core 中使用 OpenTelemetry，為應用程式埋下觀測點](https://hackmd.io/@ZamHsu/BkzYWpiao)
+- [ASP.NET Core Instrumentation for OpenTelemetry .NET](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+- [建立計量](https://learn.microsoft.com/zh-tw/dotnet/core/diagnostics/metrics-instrumentation)
+- [System.Diagnostics.Metrics 命名空間](https://learn.microsoft.com/zh-tw/dotnet/api/system.diagnostics.metrics?view=net-8.0)
