@@ -1,19 +1,17 @@
 using System.Diagnostics.Metrics;
+using DotNet7.OpenTelemetryLab.Api.Extensions;
 
 namespace DotNet7.OpenTelemetryLab.Api.Middlewares
 {
     public class OpenTelemetryMiddleware
     {
-        internal const string MeterName = "dotnet7.opentelemetry.lab";
         private readonly RequestDelegate _next;
-        private readonly Meter _meter;
         private Counter<int> _greetingCounter;
 
         public OpenTelemetryMiddleware(RequestDelegate next)
         {
             _next = next;
-            _meter = new Meter(MeterName, "1.0.0");
-            _greetingCounter = _meter.CreateCounter<int>(
+            _greetingCounter = OpenTelemetryExtension.openTelemetryMeter.CreateCounter<int>(
                 "greetings.count",
                 description: "Counts the number of greetings.");
         }

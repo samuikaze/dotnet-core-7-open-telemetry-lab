@@ -193,10 +193,10 @@ OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services,
     app.UseOpenTelemetryMiddleware();
     // 設定指標輸出的路徑
     app.UseOpenTelemetryPrometheusScrapingEndpoint(context =>
-        context.Request.Path == "/internal/metrics");
+        context.Request.Path == "/metrics");
     ```
 
-3. 啟動應用程式，存取 `/internal/metrics` 就可以看到 Prometheus 格式的指標被輸出在頁面上
+3. 啟動應用程式，存取 `/metrics` 就可以看到 Prometheus 格式的指標被輸出在頁面上
 
     > 若沒看到自訂的指標，請先試著打幾次 API，當流量經過 Middleware 後，這些指標就會被暴露出來了
 
