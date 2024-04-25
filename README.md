@@ -225,3 +225,4 @@ OpenTelemetry 在 .Net Core 中的追蹤實作是依賴於 .Net Core 內建的 `
 - [ASP.NET Core Instrumentation for OpenTelemetry .NET](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 - [建立計量](https://learn.microsoft.com/zh-tw/dotnet/core/diagnostics/metrics-instrumentation)
 - [System.Diagnostics.Metrics 命名空間](https://learn.microsoft.com/zh-tw/dotnet/api/system.diagnostics.metrics?view=net-8.0)
+- [podman build with relative path to dockerfile in subdirectory fails with "no such file or directory" on Mac #12841](https://github.com/containers/podman/issues/12841)
