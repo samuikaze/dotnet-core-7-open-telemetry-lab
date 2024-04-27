@@ -6,7 +6,8 @@ namespace DotNet7.OpenTelemetryLab.Api.Extensions
     {
         public static IApplicationBuilder ConfigureMiddlewares(this IApplicationBuilder builder)
         {
-             builder.UseMiddleware<OpenTelemetryMiddleware>();
+            // 套用 OpenTelemetryMiddleware
+            builder.UseMiddleware<OpenTelemetryMiddleware>();
 
             return builder;
         }

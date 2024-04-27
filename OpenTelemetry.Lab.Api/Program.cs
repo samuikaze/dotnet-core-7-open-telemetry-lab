@@ -19,11 +19,15 @@ ServiceMapperExtension.GetServiceProvider(builder.Services);
 DatabaseExtension.AddDatabaseContext(builder.Services, builder.Configuration);
 AuthorizationExtension.ConfigureAuthorization(builder.Services, builder.Configuration);
 HttpClientExtension.ConfigureHttpClients(builder.Services);
+// 增加 OpenTelemetryExtension
 OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services, builder.Configuration);
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
+
+// 套用 Middlewares
+app.ConfigureMiddlewares();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -51,10 +55,9 @@ app.UseAuthorization();
 
 app.UseRouting();
 
+// 設定 OpenTelemetry 輸出 Prometheus 指標的路徑
 app.UseOpenTelemetryPrometheusScrapingEndpoint(context =>
     context.Request.Path == "/metrics");
-
-app.ConfigureMiddlewares();
 
 app.UseCors(CorsHandlerExtension.CorsPolicyName);
 

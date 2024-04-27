@@ -2,7 +2,7 @@
 
 此專案用以了解如何在 .Net Core 7 中透過 OpenTelemetry 建立日誌、指標與追蹤，並暴露到 Prometheus 中。
 
-> 請注意，OpenTelemetry 雖然目前在開源社群非常活躍，但對於 .Net Core 來說，他的相關 SDK 有需多都還是搶鮮版，因此若要應用到生產環境中，請審慎評估。
+> 請注意，OpenTelemetry 雖然目前在開源社群非常活躍，但對於 .Net Core 來說，它的相關 SDK 有很多都還是搶鮮版，因此若要應用到生產環境中，請審慎評估。
 
 ## 前置準備
 
@@ -24,63 +24,83 @@
 並在 Extensions 資料夾中新增 `OpenTelemetryExtension.cs` 檔案，寫入如下的內容
 
 ```csharp
-public class OpenTelemetryExtension
+public static class OpenTelemetryExtension
 {
+    public static Meter openTelemetryMeter = new Meter("dotnet7.core.telemetry", "1.0.0");
     public static IServiceCollection ConfigureOpenTelemetry(
         ILoggingBuilder loggingBuilder,
         IServiceCollection serviceCollection,
         IConfiguration config)
     {
         string? applicationName = config.GetValue<string>("Application:Name");
-            if (applicationName == null)
-            {
-                applicationName = "OpenTelemetry.Lab";
-            }
+        if (applicationName == null)
+        {
+            applicationName = "OpenTelemetry.Lab";
+        }
 
-            string? otlpTargetUri = config.GetValue(
-                "OpenTelemetry:OtlpUri",
-                "http://localhost:4318");
-            if (otlpTargetUri == null)
-            {
-                otlpTargetUri = "http://localhost:4318";
-            }
+        string? otlpTargetUri = config.GetValue(
+            "OpenTelemetry:OtlpUri",
+            "http://localhost:4318");
+        if (otlpTargetUri == null)
+        {
+            otlpTargetUri = "http://localhost:4318";
+        }
 
-            var resource = ResourceBuilder.CreateDefault().AddService(applicationName);
-            // 設定僅輸出警告日誌
-            // loggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Warning);
-            loggingBuilder.AddOpenTelemetry(options =>
-            {
-                options.SetResourceBuilder(resource);
-                options.AddConsoleExporter();
-            });
+        var resource = ResourceBuilder.CreateDefault().AddService(applicationName);
+        // 設定僅輸出警告日誌
+        // loggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Warning);
+        loggingBuilder.AddOpenTelemetry(options =>
+        {
+            options.SetResourceBuilder(resource);
+            options.AddConsoleExporter();
+        });
 
-            serviceCollection.AddOpenTelemetry()
-                .ConfigureResource(resource => resource
-                    .AddService(serviceName: applicationName))
-                .WithMetrics(metrics => metrics
-                    .AddMeter(openTelemetryMeter.Name)
-                    .AddAspNetCoreInstrumentation()
-                    .AddRuntimeInstrumentation()
-                    .AddProcessInstrumentation()
-                    .AddPrometheusExporter()
-                    .AddConsoleExporter()
-                    .AddPrometheusExporter())
-                .WithTracing(tracing => tracing
-                    .AddAspNetCoreInstrumentation()
-                    .AddConsoleExporter())
-                .UseOtlpExporter(
-                    OtlpExportProtocol.HttpProtobuf,
-                    new Uri(otlpTargetUri));
+        serviceCollection.AddOpenTelemetry()
+            .ConfigureResource(resource => resource
+                .AddService(serviceName: applicationName))
+            .WithMetrics(metrics => metrics
+                .AddMeter(openTelemetryMeter.Name)
+                .AddAspNetCoreInstrumentation()
+                .AddRuntimeInstrumentation()
+                .AddProcessInstrumentation()
+                .AddPrometheusExporter()
+                .AddConsoleExporter()
+                .AddPrometheusExporter())
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation()
+                .AddConsoleExporter())
+            .UseOtlpExporter(
+                OtlpExportProtocol.HttpProtobuf,
+                new Uri(otlpTargetUri));
 
-            return serviceCollection;
+        return serviceCollection;
     }
 }
 ```
 
-最後到 `Program.cs` 中加入以下程式碼：
+最後到 `Program.cs` 中調整程式碼：
 
 ```csharp
+...
+var builder = WebApplication.CreateBuilder(args);
+...
+SwaggerDefinitionExtension.ConfigureSwagger(builder.Services);
+ServiceMapperExtension.GetServiceProvider(builder.Services);
+DatabaseExtension.AddDatabaseContext(builder.Services, builder.Configuration);
+AuthorizationExtension.ConfigureAuthorization(builder.Services, builder.Configuration);
+HttpClientExtension.ConfigureHttpClients(builder.Services);
+// 增加 OpenTelemetryExtension
 OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services, builder.Configuration);
+...
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.UseRouting();
+
+// 設定 OpenTelemetry 輸出 Prometheus 指標的路徑
+app.UseOpenTelemetryPrometheusScrapingEndpoint(context =>
+    context.Request.Path == "/metrics");
 ```
 
 ## 日誌撰寫
@@ -144,27 +164,25 @@ OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services,
 
 ## 指標撰寫
 
-1. 預期指標都會透過 Middleware 進行記錄，因此需建立 `TelemetryMiddleware`，並在檔案中鍵入以下程式碼：
+1. 預期指標都會透過 Middleware 進行記錄，因此需建立 `OpenTelemetryMiddleware`，並在檔案中鍵入以下程式碼：
 
-    > Meter 的名稱可以自行決定，但請務必透過常數將之暴露出去，否則在 Extension 終將無法把此自訂的 Meter 加入
+    > Meter 不建議建立太多，這會影響應用程式的效能，因此最好的方式就是在 OpenTelemetryExtension 中建立後，這邊直接引用該 Meter 即可
 
     ```csharp
     using System.Diagnostics.Metrics;
 
     namespace DotNet7.Template.Api.Middlewares
     {
-        public class TelemetryMiddleware
+        public class OpenTelemetryMiddleware
         {
-            internal const string MeterName = "dotnet7.template.opentelemetry";
             private readonly RequestDelegate _next;
-            private readonly Meter _meter;
             private Counter<int> _greetingCounter;
 
-            public TelemetryMiddleware(RequestDelegate next)
+            public OpenTelemetryMiddleware(RequestDelegate next)
             {
                 _next = next;
-                _meter = new Meter(MeterName, "1.0.0");
-                _greetingCounter = _meter.CreateCounter<int>(
+                // 引用 OpenTelemetryExtension 中的 Meter 建立自訂指標
+                _greetingCounter = OpenTelemetryExtension.openTelemetryMeter.CreateCounter<int>(
                     "greetings.count",
                     description: "Counts the number of greetings.");
             }
@@ -175,28 +193,36 @@ OpenTelemetryExtension.ConfigureOpenTelemetry(builder.Logging, builder.Services,
                 _greetingCounter.Add(1);
             }
         }
+    }
+    ```
 
-        public static class OpenTelemetryMiddlewareExtensions
+2. 在 `MiddlewareExtension.cs` 中調整為程式碼：
+
+    ```csharp
+    public static class MiddlewareExtension
+    {
+        public static IApplicationBuilder ConfigureMiddlewares(this IApplicationBuilder builder)
         {
-            public static IApplicationBuilder UseOpenTelemetryMiddleware(
-                this IApplicationBuilder app)
-            {
-                return app.UseMiddleware<TelemetryMiddleware>();
-            }
+            // 套用 OpenTelemetryMiddleware
+            builder.UseMiddleware<OpenTelemetryMiddleware>();
+
+            return builder;
         }
     }
     ```
 
-2. 在 `Program.cs` 中加入以下兩行程式碼：
+3. 在到 `Program.cs` 中確認下面的程式碼有沒有被啟用
 
     ```csharp
-    app.UseOpenTelemetryMiddleware();
-    // 設定指標輸出的路徑
-    app.UseOpenTelemetryPrometheusScrapingEndpoint(context =>
-        context.Request.Path == "/metrics");
+    ...
+    var app = builder.Build();
+
+    // 套用 Middlewares
+    app.ConfigureMiddlewares();
+    ...
     ```
 
-3. 啟動應用程式，存取 `/metrics` 就可以看到 Prometheus 格式的指標被輸出在頁面上
+4. 啟動應用程式，存取 `/metrics` 就可以看到 Prometheus 格式的指標被輸出在頁面上
 
     > 若沒看到自訂的指標，請先試著打幾次 API，當流量經過 Middleware 後，這些指標就會被暴露出來了
 

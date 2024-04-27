@@ -11,6 +11,7 @@ namespace DotNet7.OpenTelemetryLab.Api.Middlewares
         public OpenTelemetryMiddleware(RequestDelegate next)
         {
             _next = next;
+            // 引用 OpenTelemetryExtension 中的 Meter 建立自訂指標
             _greetingCounter = OpenTelemetryExtension.openTelemetryMeter.CreateCounter<int>(
                 "greetings.count",
                 description: "Counts the number of greetings.");
